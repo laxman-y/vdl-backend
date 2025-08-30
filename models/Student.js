@@ -32,7 +32,7 @@ const studentSchema = new mongoose.Schema({
   serialNo: Number,
   name: String,
   fatherName: String,
-  motherName: String,
+  motherName: Number,
   address: String,
   mobile: String,
   admissionDate: Date,
