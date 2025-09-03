@@ -183,32 +183,41 @@ router.get("/attendance-summary", async (req, res) => {
 router.post("/fees/:id", async (req, res) => {
   try {
     const { month, status, amount, paidOn } = req.body;
+    console.log("📩 Fee update request:", req.params.id, { month, status, amount, paidOn });
+
     const student = await Student.findById(req.params.id);
+    if (!student) {
+      console.log("❌ Student not found:", req.params.id);
+      return res.status(404).json({ error: "Student not found" });
+    }
 
-    if (!student) return res.status(404).json({ error: "Student not found" });
-
-    let feeRecord = student.fees.find(f => f.month === month);
+    let feeRecord = student.fees.find((f) => f.month === month);
 
     if (feeRecord) {
-      // update existing record
+      console.log("🔄 Updating existing fee record...");
       feeRecord.status = status;
-      feeRecord.amount = amount || feeRecord.amount;
-      feeRecord.paidOn = status === "paid" ? (paidOn ? new Date(paidOn) : new Date()) : null;
+      feeRecord.amount = amount;
+      if (status === "paid") {
+        feeRecord.paidOn = paidOn ? new Date(paidOn) : new Date();
+      } else {
+        feeRecord.paidOn = null;
+      }
     } else {
-      // create new record
+      console.log("➕ Adding new fee record...");
       student.fees.push({
         month,
         status,
         amount,
-        paidOn: status === "paid" ? (paidOn ? new Date(paidOn) : new Date()) : null
+        paidOn: status === "paid" ? (paidOn ? new Date(paidOn) : new Date()) : null,
       });
     }
 
     await student.save();
+    console.log("✅ Fee updated successfully!");
     res.json({ message: "Fee updated successfully", student });
   } catch (err) {
-    console.error("❌ Fee update error:", err);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("🔥 Fee update error:", err.message, err.stack);
+    res.status(500).json({ error: err.message || "Internal Server Error" });
   }
 });
 
