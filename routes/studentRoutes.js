@@ -183,29 +183,24 @@ router.get("/attendance-summary", async (req, res) => {
 router.post("/fees/:id", async (req, res) => {
   try {
     const { month, status, amount, paidOn } = req.body;
-
     const student = await Student.findById(req.params.id);
+
     if (!student) return res.status(404).json({ error: "Student not found" });
 
-    // Check if fee for the month already exists
-    let feeRecord = student.fees.find((f) => f.month === month);
+    let feeRecord = student.fees.find(f => f.month === month);
 
     if (feeRecord) {
-      // Update existing record
+      // update existing record
       feeRecord.status = status;
-      feeRecord.amount = amount;
-      if (status === "paid") {
-        feeRecord.paidOn = paidOn ? new Date(paidOn) : new Date();
-      } else {
-        feeRecord.paidOn = null;
-      }
+      feeRecord.amount = amount || feeRecord.amount;
+      feeRecord.paidOn = status === "paid" ? (paidOn ? new Date(paidOn) : new Date()) : null;
     } else {
-      // Create new fee record
+      // create new record
       student.fees.push({
         month,
         status,
         amount,
-        paidOn: status === "paid" ? (paidOn ? new Date(paidOn) : new Date()) : null,
+        paidOn: status === "paid" ? (paidOn ? new Date(paidOn) : new Date()) : null
       });
     }
 
@@ -216,7 +211,6 @@ router.post("/fees/:id", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
 
 router.post("/verify-student-mobile", async (req, res) => {
   try {
