@@ -15,18 +15,34 @@ const PORT = process.env.PORT || 5000;
 mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
   })
   .then(() => console.log("✅ MongoDB Atlas connected"))
   .catch((err) => console.error("❌ MongoDB connection failed:", err));
 
+// ✅ Explicit CORS setup
+const corsOptions = {
+  origin: [
+    "https://vdlibrary-in.vercel.app", // your frontend (production)
+    "http://localhost:5173",           // your frontend (local dev)
+  ],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+};
+app.use(cors(corsOptions));
+
 // ✅ Middlewares
-app.use(cors());
 app.use(express.json());
 
 // ✅ Health check route
 app.get("/", (req, res) => {
   res.send("📚 Library Management Server is Running!");
+});
+
+// ✅ Test CORS route
+app.get("/test-cors", (req, res) => {
+  res.json({ message: "CORS is working!" });
 });
 
 // ✅ Mount all API routes
