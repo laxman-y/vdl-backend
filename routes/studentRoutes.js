@@ -180,50 +180,40 @@ router.get("/attendance-summary", async (req, res) => {
 // ==================================
 // ✅ Fee Update
 // ==================================
-// Update fee status (Paid / Unpaid) for a student
-router.put("/students/fees/:id", async (req, res) => {
+router.post("/fees/:id", async (req, res) => {
   try {
-    const { month, status, amount } = req.body;
-
-    if (!month || !status) {
-      return res.status(400).json({ error: "Month and status are required" });
-    }
+    const { month, status, amount, paidOn } = req.body;
 
     const student = await Student.findById(req.params.id);
-    if (!student) {
-      return res.status(404).json({ error: "Student not found" });
-    }
+    if (!student) return res.status(404).json({ error: "Student not found" });
 
-    // Find fee record for the given month
+    // Check if fee for the month already exists
     let feeRecord = student.fees.find((f) => f.month === month);
 
     if (feeRecord) {
-      // ✅ Update existing fee record
-      feeRecord.status = status.toLowerCase(); // "paid" or "unpaid"
-      if (amount !== undefined) {
-        feeRecord.amount = amount;
-      }
-
-      if (status.toLowerCase() === "paid") {
-        feeRecord.paidOn = new Date();
+      // Update existing record
+      feeRecord.status = status;
+      feeRecord.amount = amount;
+      if (status === "paid") {
+        feeRecord.paidOn = paidOn ? new Date(paidOn) : new Date();
       } else {
-        feeRecord.paidOn = null; // clear paid date if unpaid
+        feeRecord.paidOn = null;
       }
     } else {
-      // ✅ Add new record if not found
+      // Create new fee record
       student.fees.push({
         month,
-        status: status.toLowerCase(),
-        amount: amount || 0,
-        paidOn: status.toLowerCase() === "paid" ? new Date() : null,
+        status,
+        amount,
+        paidOn: status === "paid" ? (paidOn ? new Date(paidOn) : new Date()) : null,
       });
     }
 
     await student.save();
-    res.json({ message: "Fee updated successfully ✅", student });
-  } catch (error) {
-    console.error("❌ Fee update error:", error.message);
-    res.status(500).json({ error: "Internal server error" });
+    res.json({ message: "Fee updated successfully", student });
+  } catch (err) {
+    console.error("❌ Fee update error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
