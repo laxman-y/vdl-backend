@@ -22,14 +22,12 @@ mongoose
 
 // ✅ Explicit CORS setup
 const corsOptions = {
-  origin: [
-    "https://vdlibrary-in.vercel.app", // your frontend (production)
-    "http://localhost:5173",           // your frontend (local dev)
-  ],
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  origin: ["https://vdlibrary-in.vercel.app", "http://localhost:5173"], // frontend URLs
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
+  credentials: true
 };
+
 app.use(cors(corsOptions));
 
 // ✅ Middlewares
