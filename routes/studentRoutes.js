@@ -177,29 +177,25 @@ router.get("/attendance-summary", async (req, res) => {
 });
 
 // Admin-only route to fetch all attendance summaries
-// New route without password
 router.get("/attendance-summary-no-password", async (req, res) => {
     const { month } = req.query;
 
-    if (!month) {
-        return res.status(400).json({ error: "Month is required." });
-    }
+    if (!month) return res.status(400).json({ error: "Month is required." });
 
     try {
         const [year, monthNumber] = month.split("-");
-
-        // Fetch all students
         const students = await Student.find({});
 
         const summary = students.map((student) => {
-            // Filter attendance for the selected month
             const attendanceDetails = (student.attendance || []).filter((record) => {
                 const [recYear, recMonth] = record.date.split("-");
                 return recYear === year && recMonth === monthNumber;
             });
 
-            const presentCount = attendanceDetails.length;
-            const totalDays = new Date(year, monthNumber, 0).getDate();
+            console.log(student.name, attendanceDetails.map(a => a.date)); // debug
+
+            const presentCount = attendanceDetails.filter(a => a.present).length;
+            const totalDays = new Date(year, parseInt(monthNumber), 0).getDate();
             const absentCount = totalDays - presentCount;
 
             return {
