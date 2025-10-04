@@ -177,20 +177,47 @@ router.get("/attendance-summary", async (req, res) => {
 });
 
 // Admin-only route to fetch all attendance summaries
-app.get("/admin/attendance-summary", authenticateAdmin, (req, res) => {
-  const students = JSON.parse(fs.readFileSync("students.json")); 
-  // or fetch from DB with attendance field populated
-  const summary = students.map(student => ({
-    id: student.id,
-    name: student.name,
-    shiftNo: student.shiftNo,
-    totalPresent: student.attendance.filter(a => a.present).length,
-    totalAbsent: student.attendance.filter(a => !a.present).length,
-    lastAttendanceDate: student.attendance.length
-      ? student.attendance[student.attendance.length - 1].date
-      : null
-  }));
-  res.json(summary);
+// New route without password
+router.get("/attendance-summary-no-password", async (req, res) => {
+    const { month } = req.query;
+
+    if (!month) {
+        return res.status(400).json({ error: "Month is required." });
+    }
+
+    try {
+        const [year, monthNumber] = month.split("-");
+
+        // Fetch all students
+        const students = await Student.find({});
+
+        const summary = students.map((student) => {
+            // Filter attendance for the selected month
+            const attendanceDetails = (student.attendance || []).filter((record) => {
+                const [recYear, recMonth] = record.date.split("-");
+                return recYear === year && recMonth === monthNumber;
+            });
+
+            const presentCount = attendanceDetails.length;
+            const totalDays = new Date(year, monthNumber, 0).getDate();
+            const absentCount = totalDays - presentCount;
+
+            return {
+                _id: student._id,
+                serialNo: student.serialNo,
+                name: student.name,
+                shiftNo: student.shiftNo,
+                presentCount,
+                absentCount,
+                attendanceDetails,
+            };
+        });
+
+        res.json(summary);
+    } catch (error) {
+        console.error("Error fetching summary (no password):", error);
+        res.status(500).json({ error: "Internal server error." });
+    }
 });
 
 
