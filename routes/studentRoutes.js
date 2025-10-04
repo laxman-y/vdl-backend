@@ -176,6 +176,23 @@ router.get("/attendance-summary", async (req, res) => {
   }
 });
 
+// Admin-only route to fetch all attendance summaries
+app.get("/admin/attendance-summary", authenticateAdmin, (req, res) => {
+  const students = JSON.parse(fs.readFileSync("students.json")); 
+  // or fetch from DB with attendance field populated
+  const summary = students.map(student => ({
+    id: student.id,
+    name: student.name,
+    shiftNo: student.shiftNo,
+    totalPresent: student.attendance.filter(a => a.present).length,
+    totalAbsent: student.attendance.filter(a => !a.present).length,
+    lastAttendanceDate: student.attendance.length
+      ? student.attendance[student.attendance.length - 1].date
+      : null
+  }));
+  res.json(summary);
+});
+
 
 // ==================================
 // ✅ Fee Update
