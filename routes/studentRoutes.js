@@ -217,6 +217,25 @@ router.get("/attendance-summary-no-password", async (req, res) => {
 });
 
 
+
+
+// ✅ Toggle Student Active/Inactive
+router.put("/toggle-status/:id", async (req, res) => {
+    try {
+        const student = await Student.findById(req.params.id);
+        if (!student) return res.status(404).json({ message: "Student not found" });
+
+        student.isActive = !student.isActive;
+        await student.save();
+
+        res.json({ success: true, message: `Student ${student.isActive ? "enabled" : "disabled"} successfully.`, student });
+    } catch (error) {
+        console.error("Error toggling student status:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
+
 // ==================================
 // ✅ Fee Update
 // ==================================
