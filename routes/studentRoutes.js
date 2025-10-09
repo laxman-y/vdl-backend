@@ -425,6 +425,24 @@ doc.lineWidth(1)
 // ✅ Student CRUD
 // ==================================
 
+
+// ✅ Enable/Disable student
+router.patch("/students/:id/status", async (req, res) => {
+  const { status } = req.body; // expected: "enabled" or "disabled"
+  try {
+    const student = await Student.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+    if (!student) return res.status(404).json({ message: "Student not found" });
+    res.json(student);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update student status" });
+  }
+});
+
+
 // POST /api/students → Create student
 router.post("/", async (req, res) => {
   try {
