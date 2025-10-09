@@ -220,19 +220,20 @@ router.get("/attendance-summary-no-password", async (req, res) => {
 
 
 // ✅ Toggle Student Active/Inactive
-router.put("/toggle-status/:id", async (req, res) => {
-    try {
-        const student = await Student.findById(req.params.id);
-        if (!student) return res.status(404).json({ message: "Student not found" });
-
-        student.isActive = !student.isActive;
-        await student.save();
-
-        res.json({ success: true, message: `Student ${student.isActive ? "enabled" : "disabled"} successfully.`, student });
-    } catch (error) {
-        console.error("Error toggling student status:", error);
-        res.status(500).json({ message: "Server error" });
-    }
+// ✅ Enable/Disable student
+router.patch("/students/:id/status", async (req, res) => {
+  const { status } = req.body; // expected: "enabled" or "disabled"
+  try {
+    const student = await Student.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+    if (!student) return res.status(404).json({ message: "Student not found" });
+    res.json(student);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update student status" });
+  }
 });
 
 
