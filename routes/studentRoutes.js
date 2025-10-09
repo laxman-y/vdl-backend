@@ -220,18 +220,18 @@ router.get("/attendance-summary-no-password", async (req, res) => {
 
 
 // ✅ Toggle Student Active/Inactive
-router.put("/toggle-status/:id", async (req, res) => {
-  try {
-    const student = await Student.findById(req.params.id);
-    if (!student) return res.status(404).json({ message: "Student not found" });
-    student.isActive = !student.isActive;
-    await student.save();
-    res.json({ message: "Student status updated", student });
-  } catch (err) {
-    console.error("Error toggling status:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
+// router.put("/toggle-status/:id", async (req, res) => {
+//   try {
+//     const student = await Student.findById(req.params.id);
+//     if (!student) return res.status(404).json({ message: "Student not found" });
+//     student.isActive = !student.isActive;
+//     await student.save();
+//     res.json({ message: "Student status updated", student });
+//   } catch (err) {
+//     console.error("Error toggling status:", err);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// });
 
 
 // ✅ Enable/Disable student
@@ -427,20 +427,20 @@ doc.lineWidth(1)
 
 
 // ✅ Enable/Disable student
-router.patch("/students/:id/status", async (req, res) => {
-  const { status } = req.body; // expected: "enabled" or "disabled"
-  try {
-    const student = await Student.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
-    if (!student) return res.status(404).json({ message: "Student not found" });
-    res.json(student);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to update student status" });
-  }
-});
+// router.patch("/students/:id/status", async (req, res) => {
+//   const { status } = req.body; // expected: "enabled" or "disabled"
+//   try {
+//     const student = await Student.findByIdAndUpdate(
+//       req.params.id,
+//       { status },
+//       { new: true }
+//     );
+//     if (!student) return res.status(404).json({ message: "Student not found" });
+//     res.json(student);
+//   } catch (error) {
+//     res.status(500).json({ error: "Failed to update student status" });
+//   }
+// });
 
 
 // POST /api/students → Create student
@@ -478,6 +478,29 @@ router.delete("/:id", async (req, res) => {
   } catch (err) {
     console.error("❌ Failed to delete student:", err);
     res.status(500).json({ error: "Failed to delete student" });
+  }
+});
+
+// ✅ Enable / Disable student (NEW)
+router.patch("/:id/status", async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!["enabled", "disabled"].includes(status)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+
+    const student = await Student.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+
+    if (!student) return res.status(404).json({ error: "Student not found" });
+
+    res.json({ message: "Student status updated", student });
+  } catch (err) {
+    console.error("Error updating student status:", err);
+    res.status(500).json({ error: "Failed to update student status" });
   }
 });
 
