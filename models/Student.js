@@ -38,6 +38,7 @@ const studentSchema = new mongoose.Schema({
   admissionDate: Date,
   password: String,
   attendance: [attendanceSchema],
+   isActive: { type: Boolean, default: true }, // ✅ New Field
   fees: [feeSchema],
   modificationHistory: [modificationSchema] // 🔧 New field added here
 });
