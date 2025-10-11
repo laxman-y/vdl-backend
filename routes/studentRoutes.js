@@ -401,7 +401,7 @@ doc.lineWidth(1)
 
     // === Watermark ===
    // Load the image, position it, rotate, and set opacity like a watermark
-doc.image("../public/logo.png", doc.page.width / 2 - 100, doc.page.height / 2 - 100, {
+doc.image("../../public/logo.png", doc.page.width / 2 - 100, doc.page.height / 2 - 100, {
   width: 200,        // Adjust the logo size
   opacity: 0.1,      // Light watermark effect
   rotate: 90,        // Rotate like your original text angle
