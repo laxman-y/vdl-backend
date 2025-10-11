@@ -401,16 +401,16 @@ doc.lineWidth(1)
 
     // === Watermark ===
   import path from "path";
+const watermarkPath = path.join(__dirname, "../public/logo.png");
+if (fs.existsSync(watermarkPath)) {
+  doc.image(watermarkPath, doc.page.width / 2 - 100, doc.page.height / 2 - 100, {
+    width: 200,
+    opacity: 0.1,
+    rotate: 90,
+    align: "center",
+  });
+}
 
-// Make sure __dirname is available (Node ESM)
-const logoPath = path.join(__dirname, "../../public/logo.png"); 
-
-doc.image(logoPath, doc.page.width / 2 - 100, doc.page.height / 2 - 100, {
-  width: 200,       // Adjust the logo size
-  opacity: 0.1,     // Light watermark effect
-  rotate: 90,       // Rotate like your original text angle
-  align: "center"
-});
 
 
     // === Header with Logo ===
