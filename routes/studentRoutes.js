@@ -13,60 +13,100 @@ import haversine from "haversine-distance"; // install: npm i haversine-distance
 
 
 // ==================================
-// ✅ Attendance Routes with GPS Verification
+// ✅ Attendance Routes (with GPS verification)
 // ==================================
 
+const LIBRARY_LAT = 25.963590; // Replace with your library latitude
+const LIBRARY_LON = 83.367599; // Replace with your library longitude
+const MAX_DISTANCE_METERS = 150; // Allowed distance in meters
 
-// Define your library’s fixed coordinates (example: Gurukula Kangri University Library)
-const LIBRARY_LOCATION = {
-  latitude: 29.9356, // 🧭 Replace with your library's actual latitude
-  longitude: 78.1030, // 🧭 Replace with your library's actual longitude
-};
+// Helper: Haversine formula
+function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371000; // Earth radius in meters
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
-const MAX_DISTANCE_METERS = 100; // e.g. 100 meters radius allowed
-
-// POST /api/students/attendance/:id/entry → Mark entry with GPS check
-router.post("/attendance/:id/entry", async (req, res) => {
-  const { date, entryTime, latitude, longitude } = req.body;
+// ✅ POST /api/students/attendance/:id → Mark attendance
+router.post("/attendance/:id", async (req, res) => {
+  const { date, present, password, lat, lon } = req.body;
 
   try {
     const student = await Student.findById(req.params.id);
     if (!student) return res.status(404).json({ error: "Student not found" });
 
-    // ✅ Verify location
-    if (!latitude || !longitude)
-      return res.status(400).json({ error: "Location required" });
-
-    const distance = haversine(
-      { latitude, longitude },
-      LIBRARY_LOCATION
-    );
-
-    if (distance > MAX_DISTANCE_METERS) {
-      return res.status(403).json({
-        error: `You are not at the library. Distance: ${Math.round(distance)}m`,
-      });
+    // ✅ Step 1: Password (mobile) validation
+    if (!password || password !== student.mobile) {
+      return res.status(401).json({ error: "Invalid password (mobile number)" });
     }
 
-    // ✅ Proceed with marking entry
-    let record = student.attendance.find((a) => a.date === date);
-
-    if (!record) {
-      record = { date, sessions: [{ entryTime, locationVerified: true }] };
-      student.attendance.push(record);
+    // ✅ Step 2: GPS validation
+    if (lat && lon) {
+      const distance = getDistanceFromLatLonInMeters(
+        lat,
+        lon,
+        LIBRARY_LAT,
+        LIBRARY_LON
+      );
+      if (distance > MAX_DISTANCE_METERS) {
+        return res.status(403).json({
+          error: `You are too far from the library (${Math.round(distance)}m). Attendance denied.`,
+        });
+      }
     } else {
-      record.sessions.push({ entryTime, locationVerified: true });
+      return res.status(400).json({ error: "Location data missing." });
+    }
+
+    // ✅ Step 3: Attendance update logic
+    const existing = student.attendance.find((a) => a.date === date);
+    if (existing) {
+      existing.present = present;
+    } else {
+      student.attendance.push({ date, present });
     }
 
     await student.save();
-    res.json({ message: "Entry marked successfully (location verified)" });
+    res.json({ message: "Attendance updated successfully with location" });
+  } catch (err) {
+    console.error("Attendance error:", err);
+    res.status(500).json({ error: "Attendance update failed" });
+  }
+});
+
+// ✅ POST /api/students/attendance/:id/entry → Mark entry time
+router.post("/attendance/:id/entry", async (req, res) => {
+  const { date, entryTime } = req.body;
+
+  try {
+    const student = await Student.findById(req.params.id);
+    if (!student) return res.status(404).json({ error: "Student not found" });
+
+    let record = student.attendance.find((a) => a.date === date);
+
+    if (!record) {
+      record = { date, sessions: [{ entryTime }] };
+      student.attendance.push(record);
+    } else {
+      record.sessions.push({ entryTime });
+    }
+
+    await student.save();
+    res.json({ message: "Entry marked" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to mark entry" });
   }
 });
 
-// POST /api/students/attendance/:id/exit → Mark exit (no GPS needed)
+// ✅ POST /api/students/attendance/:id/exit → Mark exit time
 router.post("/attendance/:id/exit", async (req, res) => {
   const { date, exitTime } = req.body;
 
@@ -86,12 +126,13 @@ router.post("/attendance/:id/exit", async (req, res) => {
 
     lastSession.exitTime = exitTime;
     await student.save();
-    res.json({ message: "Exit marked successfully" });
+    res.json({ message: "Exit marked" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to mark exit" });
   }
 });
+
 
 
 router.get("/attendance-summary", async (req, res) => {
