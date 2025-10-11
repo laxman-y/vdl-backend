@@ -400,11 +400,13 @@ doc.lineWidth(1)
 
 
     // === Watermark ===
-    doc.fontSize(40)
-      .fillColor("lightblue")
-      .opacity(0.9)
-      .text("Vinayak Digital Library Karhan Mau U.P (276402)", 50, 300, { align: "center", angle: 90 })
-      .opacity(1);
+   // Load the image, position it, rotate, and set opacity like a watermark
+doc.image("../public/logo.png", doc.page.width / 2 - 100, doc.page.height / 2 - 100, {
+  width: 200,        // Adjust the logo size
+  opacity: 0.1,      // Light watermark effect
+  rotate: 90,        // Rotate like your original text angle
+  align: "center"
+});
 
     // === Header with Logo ===
     const logoPath = path.join(__dirname, "../public/logo.png");
