@@ -5,6 +5,7 @@ const { updateStudent } = require("../controllers/studentController");
 const PDFDocument = require('pdfkit');
 const path = require("path");
 const fs = require("fs");
+import haversine from "haversine-distance"; // install: npm i haversine-distance
 
 
 
@@ -12,61 +13,60 @@ const fs = require("fs");
 
 
 // ==================================
-// ✅ Attendance Routes
+// ✅ Attendance Routes with GPS Verification
 // ==================================
 
-// POST /api/students/attendance/:id → Mark attendance
-router.post("/attendance/:id", async (req, res) => {
-  const { date, present, password } = req.body;
 
-  try {
-    const student = await Student.findById(req.params.id);
-    if (!student) return res.status(404).json({ error: "Student not found" });
+// Define your library’s fixed coordinates (example: Gurukula Kangri University Library)
+const LIBRARY_LOCATION = {
+  latitude: 29.9356, // 🧭 Replace with your library's actual latitude
+  longitude: 78.1030, // 🧭 Replace with your library's actual longitude
+};
 
-    if (!password || password !== student.mobile) {
-      return res.status(401).json({ error: "Invalid password (mobile number)" });
-    }
+const MAX_DISTANCE_METERS = 100; // e.g. 100 meters radius allowed
 
-    const existing = student.attendance.find(a => a.date === date);
-    if (existing) {
-      existing.present = present;
-    } else {
-      student.attendance.push({ date, present });
-    }
-
-    await student.save();
-    res.json({ message: "Attendance updated" });
-  } catch (err) {
-    res.status(500).json({ error: "Attendance update failed" });
-  }
-});
-
-// POST /api/students/attendance/:id/entry → Mark entry time
+// POST /api/students/attendance/:id/entry → Mark entry with GPS check
 router.post("/attendance/:id/entry", async (req, res) => {
-  const { date, entryTime } = req.body;
+  const { date, entryTime, latitude, longitude } = req.body;
 
   try {
     const student = await Student.findById(req.params.id);
     if (!student) return res.status(404).json({ error: "Student not found" });
 
+    // ✅ Verify location
+    if (!latitude || !longitude)
+      return res.status(400).json({ error: "Location required" });
+
+    const distance = haversine(
+      { latitude, longitude },
+      LIBRARY_LOCATION
+    );
+
+    if (distance > MAX_DISTANCE_METERS) {
+      return res.status(403).json({
+        error: `You are not at the library. Distance: ${Math.round(distance)}m`,
+      });
+    }
+
+    // ✅ Proceed with marking entry
     let record = student.attendance.find((a) => a.date === date);
 
     if (!record) {
-      record = { date, sessions: [{ entryTime }] };
+      record = { date, sessions: [{ entryTime, locationVerified: true }] };
       student.attendance.push(record);
     } else {
-      record.sessions.push({ entryTime });
+      record.sessions.push({ entryTime, locationVerified: true });
     }
 
     await student.save();
-    res.json({ message: "Entry marked" });
+    res.json({ message: "Entry marked successfully (location verified)" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to mark entry" });
   }
 });
 
-// POST /api/students/attendance/:id/exit → Mark exit time
+// POST /api/students/attendance/:id/exit → Mark exit (no GPS needed)
 router.post("/attendance/:id/exit", async (req, res) => {
   const { date, exitTime } = req.body;
 
@@ -86,7 +86,7 @@ router.post("/attendance/:id/exit", async (req, res) => {
 
     lastSession.exitTime = exitTime;
     await student.save();
-    res.json({ message: "Exit marked" });
+    res.json({ message: "Exit marked successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to mark exit" });
