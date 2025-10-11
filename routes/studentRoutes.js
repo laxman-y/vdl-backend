@@ -450,9 +450,9 @@ router.post("/download-receipt", async (req, res) => {
     const [year, monthNum] = month.split("-");
     const monthName = monthNames[parseInt(monthNum) - 1];
 
-    drawRow(y, `Month Paid: ${monthName} ${year}`, `Amount: ${feeRecord.amount}`, "#000", "#2E8B57", "#e8f5e9"); // green highlight for amount
+    drawRow(y, `Month Paid: ${monthName} ${year}`, `Amount: ${feeRecord.amount}`, "#000", "#FFFF00", "#e8f5e9"); // green highlight for amount
     y += 20;
-    drawRow(y, `Status: Paid`, `Date: ${new Date(feeRecord.paidOn).toLocaleDateString("en-IN")}`, "green", "#000", "#f1f8e9");
+    drawRow(y, `Status: Paid`, `Date: ${new Date(feeRecord.paidOn).toLocaleDateString("en-IN")}`, "green", "#FFFF00", "#f1f8e9");
     y += 60;
 
     // 11️⃣ Signature
