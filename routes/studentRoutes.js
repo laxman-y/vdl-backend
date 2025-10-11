@@ -400,7 +400,7 @@ doc.lineWidth(1)
 
 
     // === Watermark ===
-  import path from "path";
+  // import path from "path";
 const watermarkPath = path.join(__dirname, "../public/logo.png");
 if (fs.existsSync(watermarkPath)) {
   doc.image(watermarkPath, doc.page.width / 2 - 100, doc.page.height / 2 - 100, {
