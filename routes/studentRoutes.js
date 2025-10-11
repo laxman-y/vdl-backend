@@ -404,8 +404,8 @@ doc.lineWidth(1)
 const watermarkPath = path.join(__dirname, "../public/logo1.png");
 if (fs.existsSync(watermarkPath)) {
   doc.image(watermarkPath, doc.page.width / 2 - 100, doc.page.height / 2 - 100, {
-    width: 200,
-    opacity: 0.1,
+    width: 170,
+    opacity: 0.5,
     rotate: 90,
     align: "center",
   });
