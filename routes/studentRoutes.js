@@ -5,6 +5,8 @@ const { updateStudent } = require("../controllers/studentController");
 const PDFDocument = require('pdfkit');
 const path = require("path");
 const fs = require("fs");
+const Student = require("../models/Student"); // Update path if needed
+
 // import haversine from "haversine-distance"; // install: npm i haversine-distance
 
 
@@ -395,7 +397,7 @@ router.post("/download-receipt", async (req, res) => {
     if (fs.existsSync(watermarkPath)) {
       doc.image(watermarkPath, doc.page.width / 2 - 100, doc.page.height / 2 - 100, {
         width: 170,
-        opacity: 0.1, // lighter for watermark
+        opacity: 0.1,
         rotate: 90,
         align: "center",
       });
@@ -440,9 +442,9 @@ router.post("/download-receipt", async (req, res) => {
     let y = doc.y + 10;
     drawRow(y, `Name: ${student.name}`, `Father: ${student.fatherName}`, "#000", "#000", "#f0f0f0");
     y += 20;
-    drawRow(y, `Shift No: ${student.shiftNo.join(", ")}`, `Serial No: ${student.serialNo}`, "#000", "#000");
+    drawRow(y, `Shift No: ${student.shiftNo.join(", ")}`, `Serial No: ${student.serialNo}`);
     y += 20;
-    drawRow(y, `Mobile: ${student.mobile}`, `Admission: ${new Date(student.admissionDate).toLocaleDateString("en-IN")}`, "#000", "#000");
+    drawRow(y, `Mobile: ${student.mobile}`, `Admission: ${new Date(student.admissionDate).toLocaleDateString("en-IN")}`);
     y += 40;
 
     // 10️⃣ Payment Details Table
@@ -450,9 +452,10 @@ router.post("/download-receipt", async (req, res) => {
     const [year, monthNum] = month.split("-");
     const monthName = monthNames[parseInt(monthNum) - 1];
 
-    drawRow(y, `Month Paid: ${monthName} ${year}`, `Amount: ${feeRecord.amount}`, "#000", "#FFFF00", "#e8f5e9"); // green highlight for amount
+    // Keep Amount and Date in yellow
+    drawRow(y, `Month Paid: ${monthName} ${year}`, `Amount: ${feeRecord.amount}`, "#000", "#FFFF00", "#e8f5e9");
     y += 20;
-    drawRow(y, `Status: Paid`, `Date: ${new Date(feeRecord.paidOn).toLocaleDateString("en-IN")}`, "green", "#FFFF00", "#f1f8e9");
+    drawRow(y, `Status: Paid`, `Date: ${new Date(feeRecord.paidOn).toLocaleDateString("en-IN")}`, "#000", "#FFFF00", "#f1f8e9");
     y += 60;
 
     // 11️⃣ Signature
@@ -470,8 +473,6 @@ router.post("/download-receipt", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
-
 // ==================================
 // ✅ Student CRUD
 // ==================================
