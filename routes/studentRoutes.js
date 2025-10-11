@@ -5,7 +5,7 @@ const { updateStudent } = require("../controllers/studentController");
 const PDFDocument = require('pdfkit');
 const path = require("path");
 const fs = require("fs");
-const Student = require("../models/Student"); // Update path if needed
+
 
 // import haversine from "haversine-distance"; // install: npm i haversine-distance
 
