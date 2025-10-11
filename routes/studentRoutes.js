@@ -453,9 +453,9 @@ router.post("/download-receipt", async (req, res) => {
     const monthName = monthNames[parseInt(monthNum) - 1];
 
     // Keep Amount and Date in yellow
-    drawRow(y, `Month Paid: ${monthName} ${year}`, `Amount: ${feeRecord.amount}`, "#000", "#FFFF00", "#e8f5e9");
+    drawRow(y, `Month Paid: ${monthName} ${year}`, `Amount: ${feeRecord.amount}`, "#000", "#000", "#e8f5e9");
     y += 20;
-    drawRow(y, `Status: Paid`, `Date: ${new Date(feeRecord.paidOn).toLocaleDateString("en-IN")}`, "#000", "#FFFF00", "#f1f8e9");
+    drawRow(y, `Status: Paid`, `Date: ${new Date(feeRecord.paidOn).toLocaleDateString("en-IN")}`, "#000", "#000", "#f1f8e9");
     y += 60;
 
     // 11️⃣ Signature
