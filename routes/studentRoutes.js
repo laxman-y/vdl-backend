@@ -358,26 +358,20 @@ router.post("/verify-student-mobile", async (req, res) => {
 router.post("/download-receipt", async (req, res) => {
   try {
     const { month, password } = req.body;
-   
+
     if (!month || !password) {
       return res.status(400).json({ error: "Month and password are required" });
     }
 
-    // 1. Find student by mobile
+    // 1️⃣ Find student by mobile
     const student = await Student.findOne({ mobile: password.trim() });
-    if (!student) {
-      return res.status(404).json({ error: "Invalid mobile number" });
-    }
+    if (!student) return res.status(404).json({ error: "Invalid mobile number" });
 
-    // 2. Find paid fee record for month
-    const feeRecord = student.fees.find(
-      (f) => f.month === month && f.status === "paid"
-    );
-    if (!feeRecord) {
-      return res.status(400).json({ error: "Fee not paid for this month" });
-    }
+    // 2️⃣ Find paid fee record for the month
+    const feeRecord = student.fees.find(f => f.month === month && f.status === "paid");
+    if (!feeRecord) return res.status(400).json({ error: "Fee not paid for this month" });
 
-    // === PDF setup ===
+    // 3️⃣ Setup PDF
     const doc = new PDFDocument({ size: "A4", margin: 50 });
     res.setHeader(
       "Content-Disposition",
@@ -386,80 +380,89 @@ router.post("/download-receipt", async (req, res) => {
     res.setHeader("Content-Type", "application/pdf");
     doc.pipe(res);
 
-    // === Page Border ===
-doc.lineWidth(2)
-  .strokeColor("#2E8B57") // Green border
-  .rect(20, 20, doc.page.width - 40, doc.page.height - 40)
-  .stroke();
+    // 4️⃣ Page Border
+    doc.lineWidth(2)
+      .strokeColor("#2E8B57")
+      .rect(20, 20, doc.page.width - 40, doc.page.height - 40)
+      .stroke();
+    doc.lineWidth(1)
+      .strokeColor("#ccc")
+      .rect(30, 30, doc.page.width - 60, doc.page.height - 60)
+      .stroke();
 
-// Optional Inner Border for design
-doc.lineWidth(1)
-  .strokeColor("#ccc")
-  .rect(30, 30, doc.page.width - 60, doc.page.height - 60)
-  .stroke();
+    // 5️⃣ Watermark
+    const watermarkPath = path.join(__dirname, "../public/logo1.png");
+    if (fs.existsSync(watermarkPath)) {
+      doc.image(watermarkPath, doc.page.width / 2 - 100, doc.page.height / 2 - 100, {
+        width: 170,
+        opacity: 0.1, // lighter for watermark
+        rotate: 90,
+        align: "center",
+      });
+    }
 
-
-    // === Watermark ===
-  // import path from "path";
-const watermarkPath = path.join(__dirname, "../public/logo1.png");
-if (fs.existsSync(watermarkPath)) {
-  doc.image(watermarkPath, doc.page.width / 2 - 100, doc.page.height / 2 - 100, {
-    width: 170,
-    opacity: 0.5,
-    rotate: 90,
-    align: "center",
-  });
-}
-
-
-
-    // === Header with Logo ===
+    // 6️⃣ Header Logo
     const logoPath = path.join(__dirname, "../public/logo.png");
     if (fs.existsSync(logoPath)) {
       doc.image(logoPath, 50, 40, { width: 80 });
     }
+
     doc.fontSize(20).fillColor("#2E8B57").text("Vinayak Digital Library", 150, 45);
-    doc.fontSize(12).fillColor("#555").text("Karhan, Mau, Uttar Pradesh (276402) ", 150, 65);
-    doc.text("Phone: +91-9415883700, Phone: +91-9450881837, Email: shashi.mau62@gmail.com", 150, 80);
+    doc.fontSize(12).fillColor("#555").text(
+      "Karhan, Mau, Uttar Pradesh (276402) \nPhone: +91-9415883700, +91-9450881837, Email: shashi.mau62@gmail.com",
+      150,
+      65
+    );
+
     doc.moveDown(3);
 
-    // === Title ===
-    doc.fontSize(16).fillColor("#000").text("Fee Receipt", 45, 200, { align: "center", underline: true });
+    // 7️⃣ Title
+    doc.fontSize(16).fillColor("#000").text("Fee Receipt", 45, 200, {
+      align: "center",
+      underline: true,
+    });
     doc.moveDown(3);
 
-    // === Table Function ===
-    const drawRow = (y, col1, col2) => {
-      doc.rect(50, y, 250, 20).stroke();
-      doc.rect(300, y, 250, 20).stroke();
-      doc.text(col1, 55, y + 5);
-      doc.text(col2, 305, y + 5);
+    // 8️⃣ Table row drawing function with text color
+    const drawRow = (y, col1, col2, color1 = "#000", color2 = "#000", bgColor = null) => {
+      if (bgColor) {
+        doc.rect(50, y, 500, 20).fill(bgColor).stroke();
+      } else {
+        doc.rect(50, y, 250, 20).stroke();
+        doc.rect(300, y, 250, 20).stroke();
+      }
+      doc.fillColor(color1).text(col1, 55, y + 5);
+      doc.fillColor(color2).text(col2, 305, y + 5);
+      doc.fillColor("#000"); // Reset color
     };
 
-    // === Student Details Table ===
+    // 9️⃣ Student Details Table
     let y = doc.y + 10;
-    drawRow(y, `Name: ${student.name}`, `Father: ${student.fatherName}`);
+    drawRow(y, `Name: ${student.name}`, `Father: ${student.fatherName}`, "#000", "#000", "#f0f0f0");
     y += 20;
-    drawRow(y, `Shift No: ${student.shiftNo.join(", ")}`, `Serial No: ${student.serialNo}`);
+    drawRow(y, `Shift No: ${student.shiftNo.join(", ")}`, `Serial No: ${student.serialNo}`, "#000", "#000");
     y += 20;
-    drawRow(y, `Mobile: ${student.mobile}`, `Admission: ${new Date(student.admissionDate).toLocaleDateString("en-IN")}`);
+    drawRow(y, `Mobile: ${student.mobile}`, `Admission: ${new Date(student.admissionDate).toLocaleDateString("en-IN")}`, "#000", "#000");
     y += 40;
 
-    // === Payment Details Table ===
+    // 10️⃣ Payment Details Table
     const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
     const [year, monthNum] = month.split("-");
     const monthName = monthNames[parseInt(monthNum) - 1];
-    drawRow(y, `Month Paid: ${monthName} ${year}`, `Amount: ${feeRecord.amount}`);
+
+    drawRow(y, `Month Paid: ${monthName} ${year}`, `Amount: ${feeRecord.amount}`, "#000", "#2E8B57", "#e8f5e9"); // green highlight for amount
     y += 20;
-    drawRow(y, `Status: Paid`, `Date: ${new Date(feeRecord.paidOn).toLocaleDateString("en-IN")}`);
+    drawRow(y, `Status: Paid`, `Date: ${new Date(feeRecord.paidOn).toLocaleDateString("en-IN")}`, "green", "#000", "#f1f8e9");
     y += 60;
 
-    // === Signature ===
+    // 11️⃣ Signature
     const signPath = path.join(__dirname, "../public/sign.png");
     if (fs.existsSync(signPath)) {
       doc.image(signPath, 400, y - 10, { width: 100 });
     }
     doc.text("Authorized Signature", 350, y + 55);
 
+    // 12️⃣ Finish PDF
     doc.end();
 
   } catch (error) {
