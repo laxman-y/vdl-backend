@@ -5,9 +5,8 @@ const dotenv = require("dotenv");
 const studentRoutes = require("./routes/studentRoutes");
 const authRoutes = require("./routes/authRoutes");
 const noticeRoutes = require("./routes/noticeRoutes");
-
+const libraryCheckRoutes = require("./routes/libraryCheck");
 dotenv.config(); // Load .env
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -47,6 +46,8 @@ app.get("/test-cors", (req, res) => {
 app.use("/api/students", studentRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/notices", noticeRoutes);
+// ...other app.use routes
+app.use("/api/library", libraryCheckRoutes);
 
 // ✅ Global error handler
 app.use((err, req, res, next) => {
