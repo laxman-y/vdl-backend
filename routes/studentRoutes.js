@@ -448,16 +448,17 @@ router.post("/download-receipt", async (req, res) => {
     drawRow(y, `Mobile: ${student.mobile}`, `Admission: ${new Date(student.admissionDate).toLocaleDateString("en-IN")}`);
     y += 40;
 
-    // 10️⃣ Payment Details Table
-    const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-    const [year, monthNum] = month.split("-");
-    const monthName = monthNames[parseInt(monthNum) - 1];
+   // 10️⃣ Payment Details Table
+const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const [year, monthNum] = month.split("-");
+const monthName = monthNames[parseInt(monthNum) - 1];
 
-    // Keep Amount and Date in yellow
-    drawRow(y, `Month Paid: ${monthName} ${year}`, `Amount: ${feeRecord.amount}`, "#000", "#000", "#e8f5e9");
-    y += 20;
-    drawRow(y, `Status: Paid`, `Date: ${new Date(feeRecord.paidOn).toLocaleDateString("en-IN")}`, "#000", "#000", "#f1f8e9");
-    y += 60;
+// Remove background color by passing null for bgColor
+drawRow(y, `Month Paid: ${monthName} ${year}`, `Amount: ${feeRecord.amount}`, "#FFA500", "#000", null);
+y += 20;
+drawRow(y, `Status: Paid`, `Date: ${new Date(feeRecord.paidOn).toLocaleDateString("en-IN")}`, "#FFA500", "#000", null);
+y += 60;
+
 
     // 11️⃣ Signature
     const signPath = path.join(__dirname, "../public/sign.png");
