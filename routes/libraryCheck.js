@@ -1,18 +1,19 @@
 const express = require("express");
 const router = express.Router();
 
-// Example: Allowed library network IP range (update this as per your Wi-Fi)
-const LIBRARY_IP_PREFIXES = ["192.168.1.", "192.168.0."]; // add multiple prefixes if needed
+// ✅ Allowed library network IP range
+const LIBRARY_IP_PREFIXES = ["192.168.31."]; // update to your library subnet
 
 // GET /api/library/check-wifi → Verify if request comes from library network
 router.get("/check-wifi", (req, res) => {
   try {
-    // Get client IP
-    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "";
+    // Get client IP (handle IPv6 ::ffff: prefix)
+    let ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "";
+    ip = ip.replace("::ffff:", ""); // strip IPv6 prefix if present
     console.log("Incoming request IP:", ip);
 
     // Check if IP starts with any allowed prefix
-    const isInLibrary = LIBRARY_IP_PREFIXES.some(prefix => ip.includes(prefix));
+    const isInLibrary = LIBRARY_IP_PREFIXES.some((prefix) => ip.startsWith(prefix));
 
     if (isInLibrary) {
       return res.json({
