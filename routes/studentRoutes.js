@@ -394,7 +394,7 @@ router.post("/download-receipt", async (req, res) => {
       .stroke();
 
     // 5️⃣ Watermark
-    const watermarkPath = path.join(__dirname, "../public/logo1.png");
+    const watermarkPath = path.join(__dirname, "../public/logo11.png");
     if (fs.existsSync(watermarkPath)) {
       doc.image(watermarkPath, doc.page.width / 2 - 100, doc.page.height / 2 - 100, {
         width: 170,
