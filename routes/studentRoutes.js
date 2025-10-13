@@ -375,7 +375,7 @@ router.post("/download-receipt", async (req, res) => {
     if (!feeRecord) return res.status(400).json({ error: "Fee not paid for this month" });
 
     // 3️⃣ Setup PDF
-    const doc = new PDFDocument({ size: "A4", margin: 50 });
+    const doc = new PDFDocument({ size: "Letter", margin: 50 });
     res.setHeader(
       "Content-Disposition",
       `attachment; filename=receipt_${student.name}_${month}.pdf`
@@ -397,7 +397,7 @@ router.post("/download-receipt", async (req, res) => {
     const watermarkPath = path.join(__dirname, "../public/logo11.png");
     if (fs.existsSync(watermarkPath)) {
       doc.image(watermarkPath, doc.page.width / 2 - 100, doc.page.height / 2 - 100, {
-        width: 170,
+        width: 120,
         opacity: 0.1,
         rotate: 90,
         align: "center",
