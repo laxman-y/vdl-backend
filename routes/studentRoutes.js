@@ -38,37 +38,19 @@ function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
 }
 
 // ✅ POST /api/students/attendance/:id → Mark attendance
+// POST /api/students/attendance/:id → Mark attendance
 router.post("/attendance/:id", async (req, res) => {
-  const { date, present, password, lat, lon } = req.body;
+  const { date, present, password } = req.body;
 
   try {
     const student = await Student.findById(req.params.id);
     if (!student) return res.status(404).json({ error: "Student not found" });
 
-    // ✅ Step 1: Password (mobile) validation
     if (!password || password !== student.mobile) {
       return res.status(401).json({ error: "Invalid password (mobile number)" });
     }
 
-    // ✅ Step 2: GPS validation
-    if (lat && lon) {
-      const distance = getDistanceFromLatLonInMeters(
-        lat,
-        lon,
-        LIBRARY_LAT,
-        LIBRARY_LON
-      );
-      if (distance > MAX_DISTANCE_METERS) {
-        return res.status(403).json({
-          error: `You are too far from the library (${Math.round(distance)}m). Attendance denied.`,
-        });
-      }
-    } else {
-      return res.status(400).json({ error: "Location data missing." });
-    }
-
-    // ✅ Step 3: Attendance update logic
-    const existing = student.attendance.find((a) => a.date === date);
+    const existing = student.attendance.find(a => a.date === date);
     if (existing) {
       existing.present = present;
     } else {
@@ -76,9 +58,8 @@ router.post("/attendance/:id", async (req, res) => {
     }
 
     await student.save();
-    res.json({ message: "Attendance updated successfully with location" });
+    res.json({ message: "Attendance updated" });
   } catch (err) {
-    console.error("Attendance error:", err);
     res.status(500).json({ error: "Attendance update failed" });
   }
 });
