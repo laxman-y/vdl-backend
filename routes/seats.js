@@ -6,28 +6,31 @@ const Student = require("../models/Student");
 router.get("/seats-status", async (req, res) => {
   try {
     const students = await Student.find();
-    const totalSeats = Array.from({ length: 52 }, (_, i) => i + 1);
+    const totalSeats = Array.from({ length: 55 }, (_, i) => (i + 1).toString()); // 1 to 55 as string
 
-    const seatData = totalSeats.map((seat) => {
-      const seatStudents = students.filter((s) => s.seatNo === seat);
+    const seatData = totalSeats.map((seatNoStr) => {
+      // Find the student whose motherName matches this seat number string
+      const student = students.find((s) => s.motherName === seatNoStr);
 
-      const shift1 = seatStudents.some(
-        (s) => s.shift === 1 && s.status !== "disabled"
-      )
-        ? "full"
-        : "empty";
-      const shift2 = seatStudents.some(
-        (s) => s.shift === 2 && s.status !== "disabled"
-      )
-        ? "full"
-        : "empty";
-      const shift3 = seatStudents.some(
-        (s) => s.shift === 3 && s.status !== "disabled"
-      )
-        ? "full"
-        : "empty";
+      const shift1 =
+        student && student.shiftNo.includes(1) && student.status !== "disabled"
+          ? "full"
+          : "empty";
+      const shift2 =
+        student && student.shiftNo.includes(2) && student.status !== "disabled"
+          ? "full"
+          : "empty";
+      const shift3 =
+        student && student.shiftNo.includes(3) && student.status !== "disabled"
+          ? "full"
+          : "empty";
 
-      return { seatNo: seat, shift1, shift2, shift3 };
+      return {
+        seatNo: seatNoStr, // frontend will show this as seat number
+        shift1,
+        shift2,
+        shift3,
+      };
     });
 
     res.json(seatData);
