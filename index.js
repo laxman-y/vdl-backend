@@ -6,7 +6,8 @@ const studentRoutes = require("./routes/studentRoutes");
 const authRoutes = require("./routes/authRoutes");
 const noticeRoutes = require("./routes/noticeRoutes");
 const libraryCheckRoutes = require("./routes/libraryCheck");
-import seatRoutes from "./routes/seats.js";
+const seatRoutes = require("./routes/seats");
+
 dotenv.config(); // Load .env
 const app = express();
 const PORT = process.env.PORT || 5000;
