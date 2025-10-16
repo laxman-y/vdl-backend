@@ -6,6 +6,7 @@ const studentRoutes = require("./routes/studentRoutes");
 const authRoutes = require("./routes/authRoutes");
 const noticeRoutes = require("./routes/noticeRoutes");
 const libraryCheckRoutes = require("./routes/libraryCheck");
+import seatRoutes from "./routes/seats.js";
 dotenv.config(); // Load .env
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -48,7 +49,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/notices", noticeRoutes);
 // ...other app.use routes
 app.use("/api/library", libraryCheckRoutes);
-
+app.use("/api", seatRoutes);
 // ✅ Global error handler
 app.use((err, req, res, next) => {
   console.error("🔥 Uncaught server error:", err);
