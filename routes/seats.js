@@ -1,34 +1,40 @@
-// 📁 routes/seats.js
-import express from "express";
-import Student from "../models/Student.js";
-
+const express = require("express");
 const router = express.Router();
+const Student = require("../models/Student");
 
+// ✅ GET /api/seats-status
 router.get("/seats-status", async (req, res) => {
   try {
-    // Total seats: 1 to 52
+    const students = await Student.find();
     const totalSeats = Array.from({ length: 52 }, (_, i) => i + 1);
-    const seats = [];
 
-    for (let seat of totalSeats) {
-      const seatData = { seatNo: seat, shift1: "empty", shift2: "empty", shift3: "empty" };
+    const seatData = totalSeats.map((seat) => {
+      const seatStudents = students.filter((s) => s.seatNo === seat);
 
-      // Find all active students with this seat number
-      const students = await Student.find({ seatNo: seat, status: "enabled" });
+      const shift1 = seatStudents.some(
+        (s) => s.shift === 1 && s.status !== "disabled"
+      )
+        ? "full"
+        : "empty";
+      const shift2 = seatStudents.some(
+        (s) => s.shift === 2 && s.status !== "disabled"
+      )
+        ? "full"
+        : "empty";
+      const shift3 = seatStudents.some(
+        (s) => s.shift === 3 && s.status !== "disabled"
+      )
+        ? "full"
+        : "empty";
 
-      students.forEach((student) => {
-        if (student.shift.includes("1")) seatData.shift1 = "full";
-        if (student.shift.includes("2")) seatData.shift2 = "full";
-        if (student.shift.includes("3")) seatData.shift3 = "full";
-      });
+      return { seatNo: seat, shift1, shift2, shift3 };
+    });
 
-      seats.push(seatData);
-    }
-
-    res.json(seats);
+    res.json(seatData);
   } catch (err) {
-    res.status(500).json({ message: "Error fetching seat data" });
+    console.error("Error fetching seat status:", err);
+    res.status(500).json({ message: "Server Error" });
   }
 });
 
-export default router;
+module.exports = router;
