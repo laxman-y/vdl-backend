@@ -118,6 +118,61 @@ router.post("/attendance/:id/exit", async (req, res) => {
 
 
 
+
+// ✅ DELETE entry for a specific date
+router.delete("/attendance/:id/entry", async (req, res) => {
+  const { id } = req.params;
+  const { date } = req.body; // date format: "YYYY-MM-DD"
+
+  try {
+    const student = await Student.findById(id);
+    if (!student) return res.status(404).json({ error: "Student not found" });
+
+    const record = student.attendance.find(a => a.date === date);
+    if (!record || !record.sessions?.length) {
+      return res.status(404).json({ error: "No attendance entry found for this date" });
+    }
+
+    // Remove the last entryTime of last session
+    const lastSession = record.sessions[record.sessions.length - 1];
+    lastSession.entryTime = undefined; // or null if you prefer
+
+    await student.save();
+    res.json({ message: "Entry deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting entry:", err);
+    res.status(500).json({ error: "Failed to delete entry" });
+  }
+});
+
+// ✅ DELETE exit for a specific date
+router.delete("/attendance/:id/exit", async (req, res) => {
+  const { id } = req.params;
+  const { date } = req.body;
+
+  try {
+    const student = await Student.findById(id);
+    if (!student) return res.status(404).json({ error: "Student not found" });
+
+    const record = student.attendance.find(a => a.date === date);
+    if (!record || !record.sessions?.length) {
+      return res.status(404).json({ error: "No attendance exit found for this date" });
+    }
+
+    // Remove the last exitTime of last session
+    const lastSession = record.sessions[record.sessions.length - 1];
+    lastSession.exitTime = undefined; // or null
+
+    await student.save();
+    res.json({ message: "Exit deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting exit:", err);
+    res.status(500).json({ error: "Failed to delete exit" });
+  }
+});
+
+
+
 router.get("/attendance-summary", async (req, res) => {
     const { month, password } = req.query;
 
