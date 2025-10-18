@@ -119,23 +119,37 @@ router.post("/attendance/:id/exit", async (req, res) => {
 
 
 
-// ✅ DELETE entry for a specific date
+// ✅ DELETE a specific entry for a given date + session index or entryTime
 router.delete("/attendance/:id/entry", async (req, res) => {
   const { id } = req.params;
-  const { date } = req.body; // date format: "YYYY-MM-DD"
+  const { date, entryTime, index } = req.body;
 
   try {
     const student = await Student.findById(id);
     if (!student) return res.status(404).json({ error: "Student not found" });
 
     const record = student.attendance.find(a => a.date === date);
-    if (!record || !record.sessions?.length) {
-      return res.status(404).json({ error: "No attendance entry found for this date" });
+    if (!record || !record.sessions.length) {
+      return res.status(404).json({ error: "No attendance record found for this date" });
     }
 
-    // Remove the last entryTime of last session
-    const lastSession = record.sessions[record.sessions.length - 1];
-    lastSession.entryTime = undefined; // or null if you prefer
+    // Find target session (by index or entryTime)
+    let targetSession;
+    if (typeof index === "number") {
+      targetSession = record.sessions[index];
+    } else if (entryTime) {
+      targetSession = record.sessions.find(s => s.entryTime === entryTime);
+    }
+
+    if (!targetSession) {
+      return res.status(404).json({ error: "No matching entry session found" });
+    }
+
+    // Remove only the entryTime
+    targetSession.entryTime = undefined;
+
+    // 🧹 Clean up sessions with no entryTime and no exitTime
+    record.sessions = record.sessions.filter(s => s.entryTime || s.exitTime);
 
     await student.save();
     res.json({ message: "Entry deleted successfully" });
@@ -145,23 +159,38 @@ router.delete("/attendance/:id/entry", async (req, res) => {
   }
 });
 
-// ✅ DELETE exit for a specific date
+
+// ✅ DELETE a specific exit for a given date + session index or exitTime
 router.delete("/attendance/:id/exit", async (req, res) => {
   const { id } = req.params;
-  const { date } = req.body;
+  const { date, exitTime, index } = req.body;
 
   try {
     const student = await Student.findById(id);
     if (!student) return res.status(404).json({ error: "Student not found" });
 
     const record = student.attendance.find(a => a.date === date);
-    if (!record || !record.sessions?.length) {
-      return res.status(404).json({ error: "No attendance exit found for this date" });
+    if (!record || !record.sessions.length) {
+      return res.status(404).json({ error: "No attendance record found for this date" });
     }
 
-    // Remove the last exitTime of last session
-    const lastSession = record.sessions[record.sessions.length - 1];
-    lastSession.exitTime = undefined; // or null
+    // Find target session (by index or exitTime)
+    let targetSession;
+    if (typeof index === "number") {
+      targetSession = record.sessions[index];
+    } else if (exitTime) {
+      targetSession = record.sessions.find(s => s.exitTime === exitTime);
+    }
+
+    if (!targetSession) {
+      return res.status(404).json({ error: "No matching exit session found" });
+    }
+
+    // Remove only the exitTime
+    targetSession.exitTime = undefined;
+
+    // 🧹 Clean up sessions with no entryTime and no exitTime
+    record.sessions = record.sessions.filter(s => s.entryTime || s.exitTime);
 
     await student.save();
     res.json({ message: "Exit deleted successfully" });
@@ -170,7 +199,6 @@ router.delete("/attendance/:id/exit", async (req, res) => {
     res.status(500).json({ error: "Failed to delete exit" });
   }
 });
-
 
 
 router.get("/attendance-summary", async (req, res) => {
