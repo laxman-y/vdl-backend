@@ -5,7 +5,7 @@ const { updateStudent } = require("../controllers/studentController");
 const PDFDocument = require('pdfkit');
 const path = require("path");
 const fs = require("fs");
-
+const moment = require("moment-timezone");
 
 // import haversine from "haversine-distance"; // install: npm i haversine-distance
 
@@ -38,7 +38,6 @@ function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
 }
 
 // ✅ POST /api/students/attendance/:id → Mark attendance
-// POST /api/students/attendance/:id → Mark attendance
 router.post("/attendance/:id", async (req, res) => {
   const { date, present, password } = req.body;
 
@@ -50,11 +49,14 @@ router.post("/attendance/:id", async (req, res) => {
       return res.status(401).json({ error: "Invalid password (mobile number)" });
     }
 
-    const existing = student.attendance.find(a => a.date === date);
+    // ✅ Convert date to local date string (India time)
+    const localDate = moment().tz("Asia/Kolkata").format("YYYY-MM-DD");
+
+    const existing = student.attendance.find(a => a.date === localDate);
     if (existing) {
       existing.present = present;
     } else {
-      student.attendance.push({ date, present });
+      student.attendance.push({ date: localDate, present });
     }
 
     await student.save();
@@ -64,40 +66,46 @@ router.post("/attendance/:id", async (req, res) => {
   }
 });
 
+
 // ✅ POST /api/students/attendance/:id/entry → Mark entry time
 router.post("/attendance/:id/entry", async (req, res) => {
-  const { date, entryTime } = req.body;
-
   try {
     const student = await Student.findById(req.params.id);
     if (!student) return res.status(404).json({ error: "Student not found" });
 
-    let record = student.attendance.find((a) => a.date === date);
+    // ✅ Local date and time (India)
+    const localDate = moment().tz("Asia/Kolkata").format("YYYY-MM-DD");
+    const localEntryTime = moment().tz("Asia/Kolkata").format("hh:mm A");
+
+    let record = student.attendance.find((a) => a.date === localDate);
 
     if (!record) {
-      record = { date, sessions: [{ entryTime }] };
+      record = { date: localDate, sessions: [{ entryTime: localEntryTime }] };
       student.attendance.push(record);
     } else {
-      record.sessions.push({ entryTime });
+      record.sessions.push({ entryTime: localEntryTime });
     }
 
     await student.save();
-    res.json({ message: "Entry marked" });
+    res.json({ message: "Entry marked", entryTime: localEntryTime });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to mark entry" });
   }
 });
 
+
 // ✅ POST /api/students/attendance/:id/exit → Mark exit time
 router.post("/attendance/:id/exit", async (req, res) => {
-  const { date, exitTime } = req.body;
-
   try {
     const student = await Student.findById(req.params.id);
     if (!student) return res.status(404).json({ error: "Student not found" });
 
-    const record = student.attendance.find((a) => a.date === date);
+    // ✅ Local date and time (India)
+    const localDate = moment().tz("Asia/Kolkata").format("YYYY-MM-DD");
+    const localExitTime = moment().tz("Asia/Kolkata").format("hh:mm A");
+
+    const record = student.attendance.find((a) => a.date === localDate);
     if (!record || record.sessions.length === 0) {
       return res.status(400).json({ error: "No entry session to mark exit" });
     }
@@ -107,15 +115,14 @@ router.post("/attendance/:id/exit", async (req, res) => {
       return res.status(400).json({ error: "Last session already has exit" });
     }
 
-    lastSession.exitTime = exitTime;
+    lastSession.exitTime = localExitTime;
     await student.save();
-    res.json({ message: "Exit marked" });
+    res.json({ message: "Exit marked", exitTime: localExitTime });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to mark exit" });
   }
 });
-
 
 
 
