@@ -638,34 +638,27 @@ router.delete("/:id", async (req, res) => {
 });
 
 // ✅ Enable / Disable student (NEW)
-// ✅ Enable / Disable student (store enable/disable dates with date only)
+// ✅ Enable / Disable student (store enable/disable dates)
 router.patch("/:id/status", async (req, res) => {
   try {
     const { status } = req.body;
 
-    // Validate the status field
     if (!["enabled", "disabled"].includes(status)) {
       return res.status(400).json({ error: "Invalid status" });
     }
 
-    // Create update object
-    const updateData = { status };
-
-    // Get today's date only (no time)
+    // get today's date (date-only, time = 00:00)
     const today = new Date();
     const dateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-    // Set date fields based on status
+    const updateData = { status };
+
     if (status === "enabled") {
       updateData.enabledDate = dateOnly;
-      updateData.disabledDate = undefined; // optional: clear disabled date
-    } else if (status === "disabled") {
+    } else {
       updateData.disabledDate = dateOnly;
     }
 
-    updateData.statusUpdatedAt = dateOnly;
-
-    // Update student document
     const student = await Student.findByIdAndUpdate(
       req.params.id,
       updateData,
@@ -677,7 +670,7 @@ router.patch("/:id/status", async (req, res) => {
     }
 
     res.json({
-      message: `Student ${status === "enabled" ? "enabled" : "disabled"} successfully`,
+      message: `Student ${status === "enabled" ? "enabled" : "disabled"} successfully on ${dateOnly.toLocaleDateString()}`,
       student,
     });
   } catch (err) {
@@ -685,7 +678,6 @@ router.patch("/:id/status", async (req, res) => {
     res.status(500).json({ error: "Failed to update student status" });
   }
 });
-
 
 // ==================================
 // // ✅ Get flattened list of student modifications (audit log)
