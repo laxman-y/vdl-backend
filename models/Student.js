@@ -43,6 +43,9 @@ const studentSchema = new mongoose.Schema({
     enum: ["enabled", "disabled"],
     default: "enabled"
   },
+  // ✅ New date-only fields for enable/disable actions
+  enabledDate: { type: Date },
+  disabledDate: { type: Date },
   isActive: { type: Boolean, default: true },
   fees: [feeSchema],
   modificationHistory: [modificationSchema] // 🔧 New field added here
