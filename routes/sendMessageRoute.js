@@ -28,7 +28,7 @@ router.post("/send-message", async (req, res) => {
     path: "/dev/bulkV2",
     method: "POST",
     headers: {
-      authorization: process.env.FAST2SMS_API_KEY,
+      authorization: Soxop9s3SeiRaGn4TIZDlVhJ6YqeiURjn0Md3DcM1B7NF81YwbUS1oCUneJn,
       "Content-Type": "application/json",
       "Content-Length": Buffer.byteLength(postData),
     },
