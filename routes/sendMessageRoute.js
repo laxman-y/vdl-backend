@@ -4,12 +4,14 @@ require("dotenv").config();
 
 const router = express.Router();
 
-// ✅ FIXED: make route path "/"
-router.post("/", async (req, res) => {
+// ✅ POST /api/send-message
+router.post("/send-message", async (req, res) => {
   const { mobile, message } = req.body;
 
   if (!mobile || !message) {
-    return res.status(400).json({ message: "Mobile number and message are required." });
+    return res
+      .status(400)
+      .json({ message: "Mobile number and message are required." });
   }
 
   const postData = JSON.stringify({
@@ -37,17 +39,17 @@ router.post("/", async (req, res) => {
     response.on("data", (chunk) => (data += chunk));
     response.on("end", () => {
       try {
-        const parsed = JSON.parse(data);
-        if (parsed.return === true) {
-          console.log(`✅ Message sent to ${mobile}`);
+        const result = JSON.parse(data);
+        if (result.return === true) {
+          console.log(`✅ Message sent successfully to ${mobile}`);
           res.json({ message: "✅ Message sent successfully!" });
         } else {
-          console.error("❌ Fast2SMS Error:", parsed);
+          console.error("❌ Fast2SMS API Error:", result);
           res.status(500).json({ message: "Failed to send message." });
         }
       } catch (err) {
-        console.error("Parsing error:", err.message);
-        res.status(500).json({ message: "Unexpected response from Fast2SMS." });
+        console.error("Parse error:", err.message);
+        res.status(500).json({ message: "Unexpected Fast2SMS response." });
       }
     });
   });
