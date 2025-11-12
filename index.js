@@ -7,6 +7,7 @@ const authRoutes = require("./routes/authRoutes");
 const noticeRoutes = require("./routes/noticeRoutes");
 const libraryCheckRoutes = require("./routes/libraryCheck");
 const seatRoutes = require("./routes/seats");
+const sendMessageRoute = require("./routes/sendMessageRoute"); // ✅ using require now
 
 dotenv.config(); // Load .env
 const app = express();
@@ -43,6 +44,9 @@ app.get("/", (req, res) => {
 app.get("/test-cors", (req, res) => {
   res.json({ message: "CORS is working!" });
 });
+
+// ✅ Register route
+app.use("/send-message", sendMessageRoute);
 
 // ✅ Mount all API routes
 app.use("/api/students", studentRoutes);
