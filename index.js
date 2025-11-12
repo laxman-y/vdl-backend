@@ -46,7 +46,7 @@ app.get("/test-cors", (req, res) => {
 });
 
 // ✅ Register route
-app.use("/send-message", sendMessageRoute);
+app.use("/api", sendMessageRoute);
 
 // ✅ Mount all API routes
 app.use("/api/students", studentRoutes);
