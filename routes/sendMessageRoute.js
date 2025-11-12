@@ -33,7 +33,7 @@ router.post("/", async (req, res) => {
       },
       {
         headers: {
-          authorization: process.env.FAST2SMS_API_KEY,
+          authorization: K4P4BuW8Khsk5n4Cs2VPdLX6AV1LxEqbT14hRWFLUlYO2moQbik31ZkQoIRi,
         },
       }
     );
