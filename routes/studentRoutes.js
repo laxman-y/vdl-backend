@@ -506,6 +506,57 @@ router.get("/profit/summary", async (req, res) => {
   }
 });
 
+// ==========================================
+// ⭐ DELETE EXPENSE
+// /api/students/expenses/delete/:index
+// ==========================================
+router.delete("/expenses/delete/:index", async (req, res) => {
+  try {
+    const index = Number(req.params.index);
+    const acc = await getAccountsDoc();
+
+    if (index < 0 || index >= acc.expenses.length) {
+      return res.status(400).json({ error: "Invalid index" });
+    }
+
+    acc.expenses.splice(index, 1);
+    await acc.save();
+
+    res.json({ message: "Expense deleted" });
+  } catch (err) {
+    console.error("Delete expense error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// ==========================================
+// ⭐ EDIT EXPENSE
+// /api/students/expenses/update/:index
+// ==========================================
+router.put("/expenses/update/:index", async (req, res) => {
+  try {
+    const index = Number(req.params.index);
+    const { category, amount } = req.body;
+
+    const acc = await getAccountsDoc();
+
+    if (index < 0 || index >= acc.expenses.length) {
+      return res.status(400).json({ error: "Invalid index" });
+    }
+
+    if (category) acc.expenses[index].category = category;
+    if (amount) acc.expenses[index].amount = amount;
+
+    await acc.save();
+
+    res.json({ message: "Expense updated" });
+  } catch (err) {
+    console.error("Update expense error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
 
 // ✅ Toggle Student Active/Inactive
 // router.put("/toggle-status/:id", async (req, res) => {
