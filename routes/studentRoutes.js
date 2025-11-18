@@ -11,16 +11,6 @@ const fs = require("fs");
 
 
 
-
-// =============================
-// ✅ Health Check Route
-// =============================
-router.get("/health", (req, res) => {
-  res.status(200).send("OK");
-});
-
-
-
 // ==================================
 // ✅ Attendance Routes (with GPS verification)
 // ==================================
