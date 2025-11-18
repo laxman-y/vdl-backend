@@ -48,6 +48,16 @@ const studentSchema = new mongoose.Schema({
   disabledDate: { type: Date },
   isActive: { type: Boolean, default: true },
   fees: [feeSchema],
+
+    // ⭐ NEW
+  expenses: [
+    {
+      category: String,
+      amount: Number,
+      date: { type: Date, default: Date.now }
+    }
+  ],
+  
   modificationHistory: [modificationSchema] // 🔧 New field added here
 });
 
