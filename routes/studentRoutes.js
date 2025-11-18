@@ -8,6 +8,26 @@ const fs = require("fs");
 
 // import haversine from "haversine-distance"; // install: npm i haversine-distance
 
+// ======================================
+// ⭐ NEW → Global Accounts Document Creator
+// ======================================
+async function getAccountsDoc() {
+  let acc = await Student.findOne({ mobile: "__ACCOUNTS__" });
+
+  if (!acc) {
+    acc = new Student({
+      name: "Library Accounts",
+      mobile: "__ACCOUNTS__",
+      expenses: [],
+      fees: []
+    });
+
+    await acc.save();
+  }
+
+  return acc;
+}
+
 
 
 
@@ -359,6 +379,132 @@ router.get("/attendance-summary-no-password", async (req, res) => {
 });
 
 
+// ==========================================================
+// ⭐ NEW SECTION →  ADD EXPENSE
+// Endpoint: POST /api/students/expenses/add
+// ==========================================================
+router.post("/expenses/add", async (req, res) => {
+  try {
+    const { category, amount } = req.body;
+
+    if (!category || !amount) {
+      return res.status(400).json({ error: "Category and amount required" });
+    }
+
+    const acc = await getAccountsDoc();
+
+    acc.expenses.push({
+      category,
+      amount,
+      date: new Date()
+    });
+
+    await acc.save();
+
+    res.json({ message: "Expense added successfully" });
+  } catch (error) {
+    console.error("Expense add error:", error);
+    res.status(500).json({ error: "Failed to add expense" });
+  }
+});
+
+
+// ==========================================================
+// ⭐ NEW SECTION →  MONTHLY EXPENSE SUMMARY
+// Endpoint: GET /api/students/expenses/summary
+// ==========================================================
+router.get("/expenses/summary", async (req, res) => {
+  try {
+    const acc = await getAccountsDoc();
+
+    const summary = {};
+
+    acc.expenses.forEach(e => {
+      const d = new Date(e.date);
+      const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
+
+      if (!summary[key]) {
+        summary[key] = {
+          year: d.getFullYear(),
+          month: d.getMonth() + 1,
+          totalExpense: 0
+        };
+      }
+
+      summary[key].totalExpense += e.amount;
+    });
+
+    res.json(Object.values(summary));
+  } catch (error) {
+    console.error("Expense summary error:", error);
+    res.status(500).json({ error: "Failed to fetch monthly expense summary" });
+  }
+});
+
+
+// ==========================================================
+// ⭐ NEW SECTION →  INCOME - EXPENSE - PROFIT SUMMARY
+// Endpoint: GET /api/students/profit/summary
+// ==========================================================
+router.get("/profit/summary", async (req, res) => {
+  try {
+    const acc = await getAccountsDoc();
+    const students = await Student.find({ mobile: { $ne: "__ACCOUNTS__" } });
+
+    const summary = {};
+
+    // 1️⃣ Income Section
+    students.forEach(s => {
+      s.fees.forEach(f => {
+        if (f.status === "paid") {
+          const [year, month] = f.month.split("-");
+          const key = `${year}-${month}`;
+
+          if (!summary[key]) {
+            summary[key] = {
+              year: Number(year),
+              month: Number(month),
+              income: 0,
+              expense: 0
+            };
+          }
+
+          summary[key].income += f.amount;
+        }
+      });
+    });
+
+    // 2️⃣ Expense Section
+    acc.expenses.forEach(exp => {
+      const d = new Date(exp.date);
+      const year = d.getFullYear();
+      const month = d.getMonth() + 1;
+      const key = `${year}-${month}`;
+
+      if (!summary[key]) {
+        summary[key] = {
+          year,
+          month,
+          income: 0,
+          expense: 0
+        };
+      }
+
+      summary[key].expense += exp.amount;
+    });
+
+    // 3️⃣ Profit Calculation
+    const final = Object.values(summary).map(item => ({
+      ...item,
+      profit: item.income - item.expense
+    }));
+
+    res.json(final);
+  } catch (error) {
+    console.error("Profit summary error:", error);
+    res.status(500).json({ error: "Failed to calculate profit summary" });
+  }
+});
 
 
 // ✅ Toggle Student Active/Inactive
