@@ -35,6 +35,12 @@ app.use(cors(corsOptions));
 // ✅ Middlewares
 app.use(express.json());
 
+// ⭐ NEW — Health check route (for Render uptime)
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
+});
+
+
 // ✅ Health check route
 app.get("/", (req, res) => {
   res.send("📚 Library Management Server is Running!");
