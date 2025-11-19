@@ -18,6 +18,11 @@ const feeSchema = new mongoose.Schema({
   paidOn: Date          // auto-filled when paid
 });
 
+const disableLogSchema = new mongoose.Schema({
+  disabledDate: { type: Date, required: true },
+  enabledDate: { type: Date }, // null until enabled
+});
+
 
 // New schema to track modifications
 const modificationSchema = new mongoose.Schema({
@@ -44,8 +49,7 @@ const studentSchema = new mongoose.Schema({
     default: "enabled"
   },
   // ✅ New date-only fields for enable/disable actions
-  enabledDate: { type: Date },
-  disabledDate: { type: Date },
+ disableLogs: [disableLogSchema],
   isActive: { type: Boolean, default: true },
   fees: [feeSchema],
 
