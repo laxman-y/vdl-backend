@@ -362,6 +362,7 @@ router.get("/attendance-summary-no-password", async (req, res) => {
       return {
         _id: student._id,
         serialNo: student.serialNo,
+        motherName: student.motherName, // <-- SEAT NO ADDED
         name: student.name,
         mobile: student.mobile, // ✅ Added line
         shiftNo: student.shiftNo,
