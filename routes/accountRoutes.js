@@ -47,6 +47,68 @@ router.get("/all", async (req, res) => {
 });
 
 
+// ======================================
+// UPDATE EXPENSE
+// ======================================
+router.put("/update/:id", async (req, res) => {
+  try {
+    const { category, amount, date } = req.body;
+
+    await Account.findByIdAndUpdate(req.params.id, {
+      category,
+      amount,
+      date
+    });
+
+    res.json({ message: "Expense updated successfully" });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ======================================
+// DELETE EXPENSE
+// ======================================
+router.delete("/delete/:id", async (req, res) => {
+  try {
+    await Account.findByIdAndDelete(req.params.id);
+    res.json({ message: "Expense deleted successfully" });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ======================================
+// GET EXPENSES BY MONTH
+// ======================================
+router.get("/by-month", async (req, res) => {
+  try {
+    const { year, month } = req.query;
+
+    if (!year || !month) {
+      return res.json([]);
+    }
+
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 1);
+
+    const expenses = await Account.find({
+      date: {
+        $gte: start,
+        $lt: end
+      }
+    }).sort({ date: -1 });
+
+    res.json(expenses);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 router.get("/monthly-summary", async (req, res) => {
   try {
 
