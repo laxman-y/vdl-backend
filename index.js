@@ -8,6 +8,7 @@ const noticeRoutes = require("./routes/noticeRoutes");
 const libraryCheckRoutes = require("./routes/libraryCheck");
 const seatRoutes = require("./routes/seats");
 const sendMessageRoute = require("./routes/sendMessageRoute"); // ✅ using require now
+const accountRoutes = require("./routes/accountRoutes");
 
 dotenv.config(); // Load .env
 const app = express();
@@ -61,6 +62,7 @@ app.use("/api/notices", noticeRoutes);
 // ...other app.use routes
 app.use("/api/library", libraryCheckRoutes);
 app.use("/api", seatRoutes);
+app.use("/api/accounts", accountRoutes);
 // ✅ Global error handler
 app.use((err, req, res, next) => {
   console.error("🔥 Uncaught server error:", err);
