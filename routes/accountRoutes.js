@@ -85,45 +85,47 @@ router.get("/monthly-summary", async (req, res) => {
     ]);
 
 
-    // =============================
-    // 3️⃣ MERGE DATA
-    // =============================
-    let summaryMap = {};
+   // =============================
+// 3️⃣ MERGE DATA (FIXED)
+// =============================
+let summaryMap = {};
 
-    // Add income
-    incomeData.forEach(item => {
-      if (!item._id) return;
+// Helper to pad month
+const padMonth = (m) => m.toString().padStart(2, "0");
 
-      const [year, month] = item._id.split("-");
+// Add income
+incomeData.forEach(item => {
+  if (!item._id) return;
 
-      const key = `${year}-${month}`;
+  const [year, month] = item._id.split("-");
+  const key = `${year}-${padMonth(month)}`;
 
-      summaryMap[key] = {
-        year: Number(year),
-        month: Number(month),
-        income: item.totalIncome,
-        expense: 0
-      };
-    });
+  summaryMap[key] = {
+    year: Number(year),
+    month: Number(month),
+    income: item.totalIncome,
+    expense: 0
+  };
+});
 
-    // Add expense
-    expenseData.forEach(item => {
-      const year = item._id.year;
-      const month = item._id.month;
-      const key = `${year}-${month}`;
+// Add expense
+expenseData.forEach(item => {
+  const year = item._id.year;
+  const month = padMonth(item._id.month);
 
-      if (!summaryMap[key]) {
-        summaryMap[key] = {
-          year,
-          month,
-          income: 0,
-          expense: item.totalExpense
-        };
-      } else {
-        summaryMap[key].expense = item.totalExpense;
-      }
-    });
+  const key = `${year}-${month}`;
 
+  if (!summaryMap[key]) {
+    summaryMap[key] = {
+      year: Number(year),
+      month: Number(month),
+      income: 0,
+      expense: item.totalExpense
+    };
+  } else {
+    summaryMap[key].expense = item.totalExpense;
+  }
+});
     // =============================
     // 4️⃣ CALCULATE PROFIT
     // =============================
