@@ -47,33 +47,26 @@ router.get("/all", async (req, res) => {
 });
 
 
-// ======================================
-// MONTHLY INCOME / EXPENSE / PROFIT
-// ======================================
 router.get("/monthly-summary", async (req, res) => {
   try {
 
     // =============================
-    // 1️⃣ MONTHLY INCOME (FROM STUDENT FEES)
+    // 1️⃣ MONTHLY INCOME (FROM FEES USING month FIELD)
     // =============================
     const incomeData = await Student.aggregate([
       { $unwind: "$fees" },
       {
         $match: {
-          "fees.date": { $exists: true, $ne: null }
+          "fees.status": "paid"
         }
       },
       {
         $group: {
-          _id: {
-            year: { $year: "$fees.date" },
-            month: { $month: "$fees.date" }
-          },
+          _id: "$fees.month",   // "2026-01"
           totalIncome: { $sum: "$fees.amount" }
         }
       }
     ]);
-
 
 
     // =============================
@@ -92,19 +85,22 @@ router.get("/monthly-summary", async (req, res) => {
     ]);
 
 
-
     // =============================
-    // 3️⃣ MERGE BOTH RESULTS
+    // 3️⃣ MERGE DATA
     // =============================
     let summaryMap = {};
 
     // Add income
     incomeData.forEach(item => {
-      const key = `${item._id.year}-${item._id.month}`;
+      if (!item._id) return;
+
+      const [year, month] = item._id.split("-");
+
+      const key = `${year}-${month}`;
 
       summaryMap[key] = {
-        year: item._id.year,
-        month: item._id.month,
+        year: Number(year),
+        month: Number(month),
         income: item.totalIncome,
         expense: 0
       };
@@ -112,12 +108,14 @@ router.get("/monthly-summary", async (req, res) => {
 
     // Add expense
     expenseData.forEach(item => {
-      const key = `${item._id.year}-${item._id.month}`;
+      const year = item._id.year;
+      const month = item._id.month;
+      const key = `${year}-${month}`;
 
       if (!summaryMap[key]) {
         summaryMap[key] = {
-          year: item._id.year,
-          month: item._id.month,
+          year,
+          month,
           income: 0,
           expense: item.totalExpense
         };
@@ -126,26 +124,19 @@ router.get("/monthly-summary", async (req, res) => {
       }
     });
 
-
     // =============================
     // 4️⃣ CALCULATE PROFIT
     // =============================
     const finalData = Object.values(summaryMap).map(item => ({
-      year: item.year,
-      month: item.month,
-      income: item.income,
-      expense: item.expense,
+      ...item,
       profit: item.income - item.expense
     }));
 
 
-    // =============================
-    // 5️⃣ SORT (Latest Month First)
-    // =============================
+    // Sort
     finalData.sort((a, b) =>
       b.year - a.year || b.month - a.month
     );
-
 
     res.json(finalData);
 
@@ -153,7 +144,6 @@ router.get("/monthly-summary", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 
 module.exports = router;
