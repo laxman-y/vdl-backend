@@ -597,33 +597,64 @@ router.put("/expenses/update/:index", async (req, res) => {
 router.post("/fees/:id", async (req, res) => {
   try {
     const { month, status, amount, paidOn } = req.body;
-    console.log("📩 Fee update request:", req.params.id, { month, status, amount, paidOn });
 
     const student = await Student.findById(req.params.id);
+
     if (!student) {
-      console.log("❌ Student not found:", req.params.id);
-      return res.status(404).json({ error: "Student not found" });
+      return res.status(404).json({
+        error: "Student not found",
+      });
     }
 
-    let feeRecord = student.fees.find((f) => f.month === month);
+    let feeRecord = student.fees.find(
+      (f) => f.month === month
+    );
 
     if (feeRecord) {
-      console.log("🔄 Updating existing fee record...");
+
       feeRecord.status = status;
-      feeRecord.amount = amount;
-      if (status === "paid") {
-        feeRecord.paidOn = paidOn ? new Date(paidOn) : new Date();
-      } else {
-        feeRecord.paidOn = null;
-      }
+      feeRecord.amount = Number(amount);
+
+      feeRecord.paidOn =
+        status === "paid"
+          ? (paidOn ? new Date(paidOn) : new Date())
+          : null;
+
     } else {
-      console.log("➕ Adding new fee record...");
+
       student.fees.push({
         month,
         status,
-        amount,
-        paidOn: status === "paid" ? (paidOn ? new Date(paidOn) : new Date()) : null,
+        amount: Number(amount),
+        paidOn:
+          status === "paid"
+            ? (paidOn ? new Date(paidOn) : new Date())
+            : null,
       });
+
+    }
+
+    // ============================
+    // SAVE PAYMENT HISTORY
+    // ============================
+
+    if (status === "paid") {
+
+      student.partialPayments.push({
+
+        month,
+
+        amount: Number(amount),
+
+        paymentDate:
+          paidOn
+            ? new Date(paidOn)
+            : new Date(),
+
+        paymentType: "partial",
+
+      });
+
     }
 
     await student.save();
