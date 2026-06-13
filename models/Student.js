@@ -18,6 +18,33 @@ const feeSchema = new mongoose.Schema({
   paidOn: Date          // auto-filled when paid
 });
 
+
+const partialPaymentSchema = new mongoose.Schema({
+
+    month: {
+        type: String,
+        required: true
+    },
+
+    amount: {
+        type: Number,
+        required: true
+    },
+
+    paymentDate: {
+        type: Date,
+        default: Date.now
+    },
+
+    paymentType: {
+        type: String,
+        enum: ["partial", "carryforward", "extra"],
+        default: "partial"
+    }
+
+});
+
+
 const disableLogSchema = new mongoose.Schema({
   disabledDate: { type: Date, required: true },
   enabledDate: { type: Date }, // null until enabled
@@ -50,6 +77,7 @@ const studentSchema = new mongoose.Schema({
   },
   // ✅ New date-only fields for enable/disable actions
  disableLogs: [disableLogSchema],
+  partialPayments: [partialPaymentSchema],
   isActive: { type: Boolean, default: true },
   fees: [feeSchema],
   modificationHistory: [modificationSchema] // 🔧 New field added here
