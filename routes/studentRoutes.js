@@ -818,6 +818,116 @@ router.get("/", async (req, res) => {
   }
 });
 
+
+router.post("/partial-payment/:id", async(req,res)=>{
+
+try{
+
+const {month,amount,paymentDate,paymentType}=req.body;
+
+const student=await Student.findById(req.params.id);
+
+if(!student){
+
+return res.status(404).json({
+message:"Student not found"
+});
+
+}
+
+student.partialPayments.push({
+
+month,
+
+amount,
+
+paymentDate,
+
+paymentType
+
+});
+
+await student.save();
+
+res.json({
+
+message:"Partial payment added"
+
+});
+
+}
+
+catch(err){
+
+console.log(err);
+
+res.status(500).json({
+
+message:"Server Error"
+
+});
+
+}
+
+});
+
+router.get("/partial-payment/:id",async(req,res)=>{
+
+try{
+
+const student=await Student.findById(req.params.id);
+
+if(!student){
+
+return res.status(404).json({
+
+message:"Student not found"
+
+});
+
+}
+
+res.json(student.partialPayments);
+
+}
+
+catch(err){
+
+res.status(500).json({
+
+message:"Server Error"
+
+});
+
+}
+
+});
+
+router.delete("/partial-payment/:studentId/:paymentId",async(req,res)=>{
+
+const student=await Student.findById(req.params.studentId);
+
+student.partialPayments=
+
+student.partialPayments.filter(
+
+p=>p._id.toString()!=req.params.paymentId
+
+);
+
+await student.save();
+
+res.json({
+
+message:"Deleted"
+
+});
+
+});
+
+
+
+
 // PUT /api/students/:id → Update (with history tracking)
 router.put("/:id", updateStudent);
 
@@ -985,111 +1095,6 @@ router.post("/students/:id/mark-fee-paid", async (req, res) => {
 
 
 
-router.post("/partial-payment/:id", async(req,res)=>{
-
-try{
-
-const {month,amount,paymentDate,paymentType}=req.body;
-
-const student=await Student.findById(req.params.id);
-
-if(!student){
-
-return res.status(404).json({
-message:"Student not found"
-});
-
-}
-
-student.partialPayments.push({
-
-month,
-
-amount,
-
-paymentDate,
-
-paymentType
-
-});
-
-await student.save();
-
-res.json({
-
-message:"Partial payment added"
-
-});
-
-}
-
-catch(err){
-
-console.log(err);
-
-res.status(500).json({
-
-message:"Server Error"
-
-});
-
-}
-
-});
-
-router.get("/partial-payment/:id",async(req,res)=>{
-
-try{
-
-const student=await Student.findById(req.params.id);
-
-if(!student){
-
-return res.status(404).json({
-
-message:"Student not found"
-
-});
-
-}
-
-res.json(student.partialPayments);
-
-}
-
-catch(err){
-
-res.status(500).json({
-
-message:"Server Error"
-
-});
-
-}
-
-});
-
-router.delete("/partial-payment/:studentId/:paymentId",async(req,res)=>{
-
-const student=await Student.findById(req.params.studentId);
-
-student.partialPayments=
-
-student.partialPayments.filter(
-
-p=>p._id.toString()!=req.params.paymentId
-
-);
-
-await student.save();
-
-res.json({
-
-message:"Deleted"
-
-});
-
-});
 
 
 module.exports = router;
