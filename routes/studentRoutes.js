@@ -638,24 +638,58 @@ router.post("/fees/:id", async (req, res) => {
     // SAVE PAYMENT HISTORY
     // ============================
 
-    if (status === "paid") {
+   if (status === "paid") {
 
-      student.partialPayments.push({
+  // Calculate required fee according to shift
+  let requiredFee = 0;
 
-        month,
+  const shifts = Array.isArray(student.shiftNo)
+    ? student.shiftNo.map(Number).sort().join(",")
+    : student.shiftNo.toString().split(",").map(Number).sort().join(",");
 
-        amount: Number(amount),
+  switch (shifts) {
+    case "1":
+      requiredFee = 350;
+      break;
+    case "2":
+      requiredFee = 400;
+      break;
+    case "3":
+      requiredFee = 350;
+      break;
+    case "1,2":
+    case "1,3":
+    case "2,3":
+      requiredFee = 600;
+      break;
+    case "1,2,3":
+      requiredFee = 800;
+      break;
+    default:
+      requiredFee = Number(amount);
+  }
 
-        paymentDate:
-          paidOn
-            ? new Date(paidOn)
-            : new Date(),
+  // Sum previous partial payments for this month
+  const alreadyPaid = student.partialPayments
+    .filter((p) => p.month === month)
+    .reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
-        paymentType: "partial",
+  // Only save the amount actually received this time
+  let todayPayment = Number(amount) - alreadyPaid;
 
-      });
+  if (todayPayment <= 0) {
+    todayPayment = requiredFee - alreadyPaid;
+  }
 
-    }
+  if (todayPayment > 0) {
+    student.partialPayments.push({
+      month,
+      amount: todayPayment,
+      paymentDate: paidOn ? new Date(paidOn) : new Date(),
+      paymentType: "partial",
+    });
+  }
+}
 
     await student.save();
     console.log("✅ Fee updated successfully!");
