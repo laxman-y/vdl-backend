@@ -1,8 +1,12 @@
 const cron = require("node-cron");
 
-cron.schedule("0 2 * * *", () => {
+cron.schedule("* * * * *", () => {
+  console.log("=================================");
   console.log("Running Daily Backup...");
+  console.log("=================================");
+
+  delete require.cache[require.resolve("./backupAll")];
   require("./backupAll");
 });
 
-console.log("Daily Backup Scheduler Started");
+console.log("✅ Daily Backup Scheduler Started");
