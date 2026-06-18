@@ -9,7 +9,7 @@ const libraryCheckRoutes = require("./routes/libraryCheck");
 const seatRoutes = require("./routes/seats");
 const sendMessageRoute = require("./routes/sendMessageRoute"); // ✅ using require now
 const accountRoutes = require("./routes/accountRoutes");
-
+require("./backups/cronBackup");
 dotenv.config(); // Load .env
 const app = express();
 const PORT = process.env.PORT || 5000;
