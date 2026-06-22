@@ -591,6 +591,7 @@ router.put("/expenses/update/:index", async (req, res) => {
 // });
 
 
+
 // ==================================
 // ✅ Fee Update
 // ==================================
@@ -638,67 +639,105 @@ router.post("/fees/:id", async (req, res) => {
     // SAVE PAYMENT HISTORY
     // ============================
 
-   if (status === "paid") {
+    if (status === "paid") {
 
-  // Calculate required fee according to shift
-  let requiredFee = 0;
+      // Calculate required fee according to shift
+      let requiredFee = 0;
 
-  const shifts = Array.isArray(student.shiftNo)
-    ? student.shiftNo.map(Number).sort().join(",")
-    : student.shiftNo.toString().split(",").map(Number).sort().join(",");
+      const shifts = Array.isArray(student.shiftNo)
+        ? student.shiftNo.map(Number).sort().join(",")
+        : student.shiftNo.toString().split(",").map(Number).sort().join(",");
 
-  switch (shifts) {
-    case "1":
-      requiredFee = 350;
-      break;
-    case "2":
-      requiredFee = 400;
-      break;
-    case "3":
-      requiredFee = 350;
-      break;
-    case "1,2":
-    case "1,3":
-    case "2,3":
-      requiredFee = 600;
-      break;
-    case "1,2,3":
-      requiredFee = 800;
-      break;
-    default:
-      requiredFee = Number(amount);
-  }
+      switch (shifts) {
+        case "1":
+          requiredFee = 350;
+          break;
 
-  // Sum previous partial payments for this month
-  const alreadyPaid = student.partialPayments
-    .filter((p) => p.month === month)
-    .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+        case "2":
+          requiredFee = 400;
+          break;
 
-  // Only save the amount actually received this time
-  let todayPayment = Number(amount) - alreadyPaid;
+        case "3":
+          requiredFee = 350;
+          break;
 
-  if (todayPayment <= 0) {
-    todayPayment = requiredFee - alreadyPaid;
-  }
+        case "1,2":
+        case "1,3":
+        case "2,3":
+          requiredFee = 600;
+          break;
 
-  if (todayPayment > 0) {
-    student.partialPayments.push({
-      month,
-      amount: todayPayment,
-      paymentDate: paidOn ? new Date(paidOn) : new Date(),
-      paymentType: "partial",
-    });
-  }
-}
+        case "1,2,3":
+          requiredFee = 800;
+          break;
 
-    await student.save();
-    console.log("✅ Fee updated successfully!");
-    res.json({ message: "Fee updated successfully", student });
-  } catch (err) {
-    console.error("🔥 Fee update error:", err.message, err.stack);
-    res.status(500).json({ error: err.message || "Internal Server Error" });
-  }
-});
+        default:
+          requiredFee = Number(amount);
+      }
+
+      // Previous payment for this month
+      const alreadyPaid = student.partialPayments
+        .filter((p) => p.month === month)
+        .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+      // Admin enters TOTAL amount paid till now
+      const totalEntered = Number(amount);
+
+      // Today's actual payment
+      let todayPayment = totalEntered - alreadyPaid;
+
+      // Prevent negative value
+      if (todayPayment < 0) {
+        todayPayment = 0;
+      }
+
+      // Save only if new payment received
+      if (todayPayment > 0) {
+
+        const totalPaid = alreadyPaid + todayPayment;
+
+        student.partialPayments.push({
+          month,
+          amount: todayPayment,
+          paymentDate: paidOn ? new Date(paidOn) : new Date(),
+          paymentType: totalPaid >= requiredFee ? "completed" : "partial",
+        });
+
+      }
+    }
+
+
+    if (status === "unpaid") {
+
+      // Check if month has a completed payment
+      const hasCompletedPayment = student.partialPayments.some(
+        (p) =>
+          p.month === month &&
+          p.paymentType === "completed"
+      );
+
+      // Delete partial history only if completed exists
+      if (hasCompletedPayment) {
+
+        student.partialPayments =
+          student.partialPayments.filter(
+            (p) => p.month !== month
+          );
+
+        console.log(
+          `Deleted completed payment history for ${month}`
+        );
+      }
+    }
+    
+      await student.save();
+      console.log("✅ Fee updated successfully!");
+      res.json({ message: "Fee updated successfully", student });
+    } catch (err) {
+      console.error("🔥 Fee update error:", err.message, err.stack);
+      res.status(500).json({ error: err.message || "Internal Server Error" });
+    }
+  });
 
 router.post("/verify-student-mobile", async (req, res) => {
   try {
@@ -884,111 +923,60 @@ router.get("/", async (req, res) => {
 });
 
 
-router.post("/partial-payment/:id", async(req,res)=>{
+router.get("/partial-payment/:id", async (req, res) => {
 
-try{
+  try {
 
-const {month,amount,paymentDate,paymentType}=req.body;
+    const student = await Student.findById(req.params.id);
 
-const student=await Student.findById(req.params.id);
+    if (!student) {
 
-if(!student){
+      return res.status(404).json({
 
-return res.status(404).json({
-message:"Student not found"
-});
+        message: "Student not found"
 
-}
+      });
 
-student.partialPayments.push({
+    }
 
-month,
+    res.json(student.partialPayments);
 
-amount,
+  }
 
-paymentDate,
+  catch (err) {
 
-paymentType
+    res.status(500).json({
 
-});
+      message: "Server Error"
 
-await student.save();
+    });
 
-res.json({
-
-message:"Partial payment added"
+  }
 
 });
 
-}
+router.delete("/partial-payment/:studentId/:paymentId", async (req, res) => {
 
-catch(err){
+  const student = await Student.findById(req.params.studentId);
 
-console.log(err);
+  student.partialPayments =
 
-res.status(500).json({
+    student.partialPayments.filter(
 
-message:"Server Error"
+      p => p._id.toString() != req.params.paymentId
 
-});
+    );
 
-}
+  await student.save();
 
-});
+  res.json({
 
-router.get("/partial-payment/:id",async(req,res)=>{
+    message: "Deleted"
 
-try{
-
-const student=await Student.findById(req.params.id);
-
-if(!student){
-
-return res.status(404).json({
-
-message:"Student not found"
+  });
 
 });
 
-}
-
-res.json(student.partialPayments);
-
-}
-
-catch(err){
-
-res.status(500).json({
-
-message:"Server Error"
-
-});
-
-}
-
-});
-
-router.delete("/partial-payment/:studentId/:paymentId",async(req,res)=>{
-
-const student=await Student.findById(req.params.studentId);
-
-student.partialPayments=
-
-student.partialPayments.filter(
-
-p=>p._id.toString()!=req.params.paymentId
-
-);
-
-await student.save();
-
-res.json({
-
-message:"Deleted"
-
-});
-
-});
 
 
 
