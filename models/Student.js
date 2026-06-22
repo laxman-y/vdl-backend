@@ -38,7 +38,7 @@ const partialPaymentSchema = new mongoose.Schema({
 
     paymentType: {
         type: String,
-        enum: ["partial", "carryforward", "extra"],
+        enum: ["partial", "completed", "carryforward", "extra"],
         default: "partial"
     }
 
