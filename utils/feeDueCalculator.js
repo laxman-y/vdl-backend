@@ -119,11 +119,11 @@ function calculateFeeStatus(student) {
 
     dueDate.setHours(0, 0, 0, 0);
 
-    // 5-day grace period
+    // 15-day grace period
     const graceDate = new Date(dueDate);
 
     graceDate.setDate(
-      graceDate.getDate() + 5
+      graceDate.getDate() + 15
     );
 
     if (today >= graceDate) {
