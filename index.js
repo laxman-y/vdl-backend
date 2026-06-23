@@ -9,6 +9,7 @@ const libraryCheckRoutes = require("./routes/libraryCheck");
 const seatRoutes = require("./routes/seats");
 const sendMessageRoute = require("./routes/sendMessageRoute"); // ✅ using require now
 const accountRoutes = require("./routes/accountRoutes");
+const wifiCheckRoutes = require("./routes/wifiCheckRoutes");
 require("./backups/cronBackup");
 dotenv.config(); // Load .env
 const app = express();
@@ -63,6 +64,7 @@ app.use("/api/notices", noticeRoutes);
 app.use("/api/library", libraryCheckRoutes);
 app.use("/api", seatRoutes);
 app.use("/api/accounts", accountRoutes);
+app.use("/api/wifi-check", wifiCheckRoutes);
 // ✅ Global error handler
 app.use((err, req, res, next) => {
   console.error("🔥 Uncaught server error:", err);
