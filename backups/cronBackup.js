@@ -2,7 +2,7 @@ const cron = require("node-cron");
 
 let isRunning = false;
 
-cron.schedule("* * * * *", () => {
+cron.schedule("0 2 * * *", () => {
 
   if (isRunning) {
     console.log("Backup already running...");
