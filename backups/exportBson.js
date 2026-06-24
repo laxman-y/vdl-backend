@@ -7,20 +7,23 @@ const backupDir = path.join(__dirname, "temp", "mongodb_dump");
 
 fs.ensureDirSync(backupDir);
 
-// IMPORTANT:
-// Replace this with the full path to mongodump.exe on your PC
-
-const mongodumpPath =
-  `"C:\\Users\\HP\\Downloads\\mongodb-database-tools-windows-x86_64-100.17.0\\mongodb-database-tools-windows-x86_64-100.17.0\\bin\\mongodump.exe"`;
-
-// database name
 const dbName = "test";
 
-const command = `${mongodumpPath} --uri="${process.env.MONGO_URI}" --db=${dbName} --out="${backupDir}"`;
+// Detect OS
+const isWindows = process.platform === "win32";
+
+const mongodumpPath = isWindows
+  ? `"C:\\Users\\HP\\Downloads\\mongodb-database-tools-windows-x86_64-100.17.0\\mongodb-database-tools-windows-x86_64-100.17.0\\bin\\mongodump.exe"`
+  : "mongodump";
+
+const command =
+  `${mongodumpPath} --uri="${process.env.MONGO_URI}" ` +
+  `--db=${dbName} --out="${backupDir}"`;
 
 exec(command, (error, stdout, stderr) => {
   if (error) {
-    console.log(error);
+    console.log("❌ BSON Backup Failed");
+    console.log(error.message);
     return;
   }
 
@@ -29,6 +32,5 @@ exec(command, (error, stdout, stderr) => {
   }
 
   console.log("✅ BSON Backup Created Successfully");
-
   console.log(backupDir);
 });
